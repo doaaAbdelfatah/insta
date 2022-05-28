@@ -5,7 +5,7 @@ session_start();
 $user_name  =$_POST["username"];
 $pw  = md5($_POST["password"]);
 
-$qry = "select name, email, user_name, birthdate, mobile, gender, created_at, update_at from  users  where user_name='$user_name' and password='$pw'";
+    $qry = "select id, name, email, user_name, birthdate, mobile, gender, created_at, update_at from  users  where user_name='$user_name' and password='$pw'";
     
     require("db.php");
 

@@ -42,30 +42,26 @@
                 <li>
                     <a href="#"><i class="far fa-compass"></i></a>
                 </li>
-                <li>
-                    <a href="#"><i class="far fa-heart"></i></a>
-                </li>
+              
                 <li>
                     <!-- <a href="#"><i class="far fa-user"></i></a> -->
                     <span><?=  $user ["name"]?></span>
                 </li>
+                <li>
+                    <a href="logout.php" class="text-info"> Logout</a>
+                </li>
+               
             </ul>
         </nav>
     </section>
 
-
-
-
     <!--share section-->
-
-
-
     <div class="  py-5 my-5 col-md-5  mx-auto ">
-        <form action="">
+        <form method="post" action="post-create.php"  enctype="multipart/form-data">
             <div class=" mb-3 w-50  border-dark border-1 ">
                 <!-- <label class="input-group-text" for="inputGroupFile01"></label> -->
-                <input type="text" placeholder="say Somthing" id="inputGroupFile01">
-                <i class=" fa fa-image "> <input type="file" multiple id="inputGroupFile01">
+                <textarea type="text" rows="" name="body" placeholder="say Somthing" id="inputGroupFile01"></textarea>
+                <i class=" fa fa-image "> <input type="file" name="images[]"  multiple id="inputGroupFile01">
                 </i>
             </div>
             <button type="submit" class="btn btn-primary">share</button>
@@ -77,155 +73,82 @@
             <!--status start-->
 
             <div class="status    col-md-5 col-lg-6 col-xl-12  mx-auto">
+             
+
+            <?php 
+                require("db.php");                
+                $qry ="select u.id ,u.name , u.gender ,u.created_at   ,
+                (select request_status from friendes where users_id =".$user["id"]." and friend_id = u.id) request_status ,
+                 (select request_status from friendes where friend_id =".$user["id"]." and users_id = u.id) has_request 
+                from users u where u.id !=" .$user["id"] . " and u.id not in 
+                (select friend_id from friendes where request_status='accepted' and users_id=".$user["id"]."  
+                union select users_id from friendes where request_status='accepted' and friend_id=".$user["id"].")"; 
+
+                $rslt =mysqli_query($cn , $qry);
+                while($selected_user =mysqli_fetch_assoc($rslt)){
+            ?>
                 <div class="image">
-                    <img src="images/cars/car1.jpg" alt="image" />
-                    <h6>Ali</h6>
+                    <img src="images/<?= $selected_user["gender"] ?>.png" alt="image" />
+                    <h6><?= $selected_user["name"] ?></h6>
+                    <?php 
+                    if ( !empty($selected_user["has_request"])){
+                        ?>
+                        <a href="friend-request.php?status=accept&friend_id=<?= $selected_user["id"] ?>" class="h6">Accept</a>| 
+                        <a href="friend-request.php?status=reject&friend_id=<?= $selected_user["id"] ?>" class="h6">Reject</a>
+                    <?php
+
+                    }elseif ( empty($selected_user["request_status"])){
+                        ?>
+                            <a href="friend-request.php?friend_id=<?= $selected_user["id"] ?>" class="h6">Freind Request</a>
+                        <?php
+                    }else{
+                        ?>
+                        <a href="friend-request.php?status=remove&friend_id=<?= $selected_user["id"] ?>" class="h6">Remove Request</a>
+                    <?php  
+                    }
+                    ?>
                 </div>
-                <div class="image">
-                    <img src="images/cars/car2.jpg" alt="image" />
-                    <h6>praveen </h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car3.jpg" alt="image" />
-                    <h6>deenadhy...</h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car4.jpg" alt="image" />
-                    <h6>vikin</h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car5.png" alt="image" />
-                    <h6>siva</h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car6.jpg" alt="image" />
-                    <h6>Ali Sayeed</h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car7.jpg" alt="image" />
-                    <h6>praveen k...</h6>
-                </div>
-                <div class="image">
-                    <img src="images/cars/car8.jpg" alt="image" />
-                    <h6>deenadhy...</h6>
-                </div>
+            <?php
+            }
+                mysqli_close($cn);
+        ?>
             </div>
-            <!--folowed member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5s-->
-            <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
-                <div class="profile">
-                    <img src="images/cars/gtr.jpg" alt="" />
-                    <h6>gtr lover</h6>
-                    <span>...</span>
-                </div>
-                <div class="photos col-md-5 mx-auto">
-                    <img class="w-100 mx-auto" src="images/cars/car2.jpg" alt="photo" />
-                </div>
-                <div class="share">
-                    <div class="heart">
-                        <i class="far fa-heart"></i>
-                        <i class="far fa-comment"></i>
-                        <i class="far fa-paper-plane"></i>
+
+    <?php
+    require("db.php");
+    $query ="select p.id , p.body , u.id  user_id,  u.name  ,p.created_at    ,get_first_image(p.id ) url from posts p join users u on (p.users_id =u.id)  order by p.created_at desc";
+    $rslt =mysqli_query($cn , $query);
+    while($posts =mysqli_fetch_assoc($rslt)){
+    ?>
+            <!-- start  post section -->
+                <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
+                    <div class="profile">
+                        <img src="images/cars/gtr.jpg" alt="" />
+                        <h6><?= $posts["name"]?></h6>
                     </div>
-                    <i class="far fa-bookmark"></i>
-                </div>
-                <div class="like">
-                    <img src="images/cars/car1.jpg" alt="" />
-                    <p>liked by Youseif ALi and others</p>
-                </div>
-                <span>3 DAYS AGO</span>
-            </div>
-            <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
-                <div class="profile">
-                    <img src="images/cars/gtr.jpg" alt="" />
-                    <h6>gtr lover</h6>
-                    <span>...</span>
-                </div>
-                <div class="photos  col-md-5 mx-auto">
-                    <img class="w-100 mx-auto" src="images/cars/road.jpg" alt="photo" />
-                </div>
-                <div class="share">
-                    <div class="heart">
-                        <i class="far fa-heart"></i>
-                        <i class="far fa-comment"></i>
-                        <i class="far fa-paper-plane"></i>
+                    <div class="photos col-md-5 mx-auto">
+                        <img class="w-100 mx-auto" src="<?= $posts["url"]?>" alt="photo" />
                     </div>
-                    <i class="far fa-bookmark"></i>
-                </div>
-                <div class="like">
-                    <img src="images/cars/gtr.jpg" alt="" />
-                    <p>liked by Sayed Ali and others</p>
-                </div>
-                <span>3 DAYS AGO</span>
-            </div>
-            <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
-                <div class="profile">
-                    <img src="images/cars/car1.jpg" alt="" />
-                    <h6>gtr lover</h6>
-                    <span>...</span>
-                </div>
-                <div class="photos col-md-5 mx-auto">
-                    <img class="w-100 mx-auto" src="images/cars/car7.jpg" alt="photo" />
-                </div>
-                <div class="share">
-                    <div class="heart">
-                        <i class="far fa-heart"></i>
-                        <i class="far fa-comment"></i>
-                        <i class="far fa-paper-plane"></i>
+                    <h3> <?= $posts["body"]?></h3>
+                    <div class="share">
+                        <div class="heart">
+                            <i class="far fa-heart"></i>
+                            <i class="far fa-comment"></i>
+                            <i class="far fa-paper-plane"></i>
+                        </div>
+                        <i class="far fa-bookmark"></i>
                     </div>
-                    <i class="far fa-bookmark"></i>
-                </div>
-                <div class="like">
-                    <img src="images/cars/car2.jpg" alt="" />
-                    <p>liked by Ahmed and others</p>
-                </div>
-                <span>3 DAYS AGO</span>
-            </div>
-            <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
-                <div class="profile">
-                    <img src="images/cars/car2.jpg" alt="" />
-                    <h6>gtr lover</h6>
-                    <span>...</span>
-                </div>
-                <div class="photos col-md-5 mx-auto">
-                    <img class="w-100 mx-auto" src="images/cars/car4.jpg" alt="photo" />
-                </div>
-                <div class="share">
-                    <div class="heart">
-                        <i class="far fa-heart"></i>
-                        <i class="far fa-comment"></i>
-                        <i class="far fa-paper-plane"></i>
+                    <div class="like">
+                        <img src="images/cars/car1.jpg" alt="" />
+                        <p>liked by Youseif ALi and others</p>
                     </div>
-                    <i class="far fa-bookmark"></i>
+                    <span><?= $posts["created_at"]?></span>
                 </div>
-                <div class="like">
-                    <img src="images/cars/car1.jpg" alt="" />
-                    <p>liked by ryad and others</p>
-                </div>
-                <span>3 DAYS AGO</span>
-            </div>
-            <div class="member col-md-5 col-lg-6 col-xl-12  mx-auto col-md-5 col-lg-6 col-xl-12 col-md-5">
-                <div class="profile">
-                    <img src="images/cars/car4.jpg" alt="" />
-                    <h6>gtr lover</h6>
-                    <span>...</span>
-                </div>
-                <div class="photos col-md-5 mx-auto">
-                    <img class="w-100 mx-auto" src="images/cars/car5.png" alt="photo" />
-                </div>
-                <div class="share">
-                    <div class="heart">
-                        <i class="far fa-heart"></i>
-                        <i class="far fa-comment"></i>
-                        <i class="far fa-paper-plane"></i>
-                    </div>
-                    <i class="far fa-bookmark"></i>
-                </div>
-                <div class="like">
-                    <img src="images/cars/car1.jpg" alt="" />
-                    <p>liked by refat elsigab and others</p>
-                </div>
-                <span>3 DAYS AGO</span>
-            </div>
+            <!-- end  post section -->
+   <?php
+       }
+        mysqli_close($cn);
+   ?>
         </section>
     </div>
 </body>
